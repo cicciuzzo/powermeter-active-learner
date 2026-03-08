@@ -63,3 +63,7 @@ Due modalità complementari:
 - Seguire le regole globali in `~/.claude/CLAUDE.md` (dipendenze, Python 3, branching, ecc.)
 - **README.md**: va aggiornato ad ogni commit significativo. Prima di committare, verificare se il README necessita di aggiornamento.
 - Repo GitHub: **privato** (regola globale).
+
+## Subagenti di progetto
+
+- **roberto-caltech** (`~/.claude/agents/roberto-caltech.md`): invocare SEMPRE per decisioni sulla parte ML/reti neurali (scelta architettura, iperparametri, strategie di training, valutazioni di fattibilità, debug del modello).
