@@ -108,7 +108,7 @@ State transitions are not committed on a single window prediction. A change of s
 | Language | Python 3 |
 | Home automation | Home Assistant (hassio) |
 | Inference/training hardware | Raspberry Pi 3 (ARM Cortex-A53, no GPU) |
-| ML framework | TBD |
+| ML framework | PyTorch (CPU) — ARM wheel, no GPU |
 | Display/IO | GPIO display + physical buttons on rpi-learner |
 | Data source | Smart plug with power meter, exposed via Home Assistant |
 
@@ -116,7 +116,7 @@ Specific libraries and frameworks will be selected as implementation begins, fol
 
 ## Project Status
 
-Early stage -- architecture and ML approach defined, implementation pending.
+Core engine implemented. Modules: DataSource (abstract + mock), SignalWindow, BaselineDetector, PowerNet (1D-CNN, 4 708 params), ReplayBuffer (SQLite), LabelManager, Trainer (incremental mini-batch + replay buffer), ConfidenceTracker, DriftDetector (Page-Hinkley). Pending: hardware integration (GPIO display, physical buttons), real DataSource implementation, field testing.
 
 ## License
 
