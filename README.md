@@ -15,6 +15,18 @@ A single smart plug with a built-in power meter feeds both a washing machine and
 
 In particular, the system detects start/stop events for each appliance cycle.
 
+## Signal Model
+
+The observed power signal is modeled as:
+
+```
+P_obs(t) = P_wm(t) + P_td(t) + ε(t),    ε ~ N(0, σ²)
+```
+
+where `P_wm(t)` is the washing machine contribution, `P_td(t)` is the tumble dryer contribution, and `ε(t)` is additive Gaussian measurement noise.
+
+The disaggregation problem is tractable because the two loads are separable both spectrally and in amplitude: the washing machine exhibits characteristic periodic current bursts at frequencies driven by drum rotation and heating cycles, while the tumble dryer maintains a steadier high-wattage draw. This spectral and amplitude separation makes the four-class identification problem well-posed even from the single aggregated measurement.
+
 ## Architecture
 
 The system is composed of two Raspberry Pi devices:
@@ -37,10 +49,23 @@ The system is composed of two Raspberry Pi devices:
 **Model constraints:**
 
 - Less than 10K parameters -- must run inference and training on a Raspberry Pi 3 without GPU.
-- Candidate architectures: **1D-CNN** over temporal windows, or **FHMM** (Factorial Hidden Markov Model).
+- Primary architecture: **1D-CNN** over temporal windows with a replay buffer (see Online Learning below).
+- The **FHMM** (Factorial Hidden Markov Model) is retained as a theoretical reference: it explicitly models the additive structure of the signal and provides a principled probabilistic decomposition, but its online incremental implementation is non-trivial and it is not the primary deployment target.
 - Online/continuous learning: the model keeps improving as new labeled data arrives, without requiring full retraining.
 
 **Classification target:** 4-class state detection (idle, washing machine, dryer, both) with event-level start/stop detection.
+
+### Baseline
+
+Before any ML model is considered, a threshold-based baseline is established: an adaptive detector that flags state changes based on rolling mean and local variance computed within a sliding window. Any ML model must outperform this baseline on the held-out test set to justify the added complexity. This baseline also serves as a fallback during cold-start periods when the ML model has insufficient labeled data.
+
+### Online Learning
+
+The 1D-CNN is updated via mini-batch incremental learning with a fixed-size replay buffer. Newly labeled samples are appended to the buffer using a FIFO aging policy, evicting the oldest entries when capacity is reached. Each model update mixes recent samples with a random draw from the historical buffer, preventing catastrophic forgetting while keeping the model responsive to distribution shifts caused by appliance replacement or seasonal usage changes.
+
+### Class Imbalance
+
+The class distribution is inherently skewed: the Idle state dominates because appliances run for a fraction of total time. This is handled via class-weighted cross-entropy loss, with weights inversely proportional to class frequency. HITL feedback samples belonging to rare classes (washing machine, dryer, both) are prioritized during buffer sampling to ensure the model does not degenerate toward Idle prediction under low-feedback regimes.
 
 ## Human-in-the-Loop Labeling
 
@@ -67,9 +92,14 @@ When the model generates a prediction (e.g., "washing machine finished"), it is 
 
 The GPIO display shows model confidence metrics to give the user a sense of how reliable predictions are:
 
-- **Prediction entropy** as a proxy for per-sample confidence.
+- **Prediction entropy** as a proxy for per-sample confidence. Raw entropy scores are calibrated via temperature scaling applied post-training, so that reported confidence values are better aligned with empirical accuracy.
 - **Rolling accuracy** -- percentage of correct predictions over the last N evaluated samples (OK vs KO ratio).
 - **Temporal decay** -- an exponential decay or sliding window over older samples ensures the model adapts to appliance replacements or behavioral changes over time.
+- **Drift detection** -- a Page-Hinkley test runs continuously on the raw power signal to detect structural changes (e.g., appliance replacement, sensor drift). A detected change triggers a confidence penalty and prompts more aggressive HITL solicitation until sufficient new labeled data is collected.
+
+### Start/Stop Debouncing
+
+State transitions are not committed on a single window prediction. A change of state is confirmed only after k consecutive windows agree on the new state. This debouncing step prevents spurious start/stop events caused by transient signal oscillations (e.g., motor startup spikes, heating element cycling) from propagating to the user-facing display or the event log.
 
 ## Tech Stack
 
