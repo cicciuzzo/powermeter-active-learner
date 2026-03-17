@@ -36,7 +36,7 @@ _display_lock = threading.Lock()
 
 
 def _make_image(line1: str, line2: str = "") -> Image.Image:
-    """Create a white 264×176 bitmap with up to two lines of text."""
+    """Create a white 176×264 bitmap with up to two lines of text."""
     img = Image.new("1", (WIDTH, HEIGHT), 255)  # 255 = white in 1-bit mode
     draw = ImageDraw.Draw(img)
     draw.text((8, 20), line1, font=FONT_LARGE, fill=0)
