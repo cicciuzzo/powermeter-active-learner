@@ -313,6 +313,27 @@ def _draw_bottom(draw: ImageDraw.ImageDraw, s: UIState) -> None:
 # Debug screen
 # -----------------------------------------------------------------------
 
+def render_standby_frame() -> Image.Image:
+    """Render a standby screen with random text position for burn-in protection."""
+    import random
+    img = Image.new("1", (LANDSCAPE_W, LANDSCAPE_H), 255)
+    draw = ImageDraw.Draw(img)
+
+    from datetime import datetime
+    ts = datetime.now().strftime("%H:%M:%S")
+
+    # Random position within safe margins (text ~140x30 px)
+    max_x = LANDSCAPE_W - 150
+    max_y = LANDSCAPE_H - 40
+    rx = random.randint(10, max(10, max_x))
+    ry = random.randint(10, max(10, max_y))
+
+    draw.text((rx, ry), "Stand-by mode", font=FONT_MD_BOLD, fill=0)
+    draw.text((rx, ry + 18), ts, font=FONT_SM, fill=0)
+
+    return img
+
+
 def render_debug_frame(d: DebugState) -> Image.Image:
     """Render the developer debug screen. Returns 264x176 1-bit image."""
     img = Image.new("1", (LANDSCAPE_W, LANDSCAPE_H), 255)

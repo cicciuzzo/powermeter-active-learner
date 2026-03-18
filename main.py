@@ -46,7 +46,7 @@ from engine.confidence import ConfidenceTracker, DriftDetector, confidence_blend
 
 # HAT display (RPi-only — skip on dev machines)
 try:
-    from hat import EinkDisplay, ButtonHandler, UIState, DebugState, render_frame, render_debug_frame
+    from hat import EinkDisplay, ButtonHandler, UIState, DebugState, render_frame, render_debug_frame, render_standby_frame
     _HAT_AVAILABLE = True
 except ImportError:
     _HAT_AVAILABLE = False
@@ -287,6 +287,9 @@ def main() -> None:
     _ui_state = UIState()
     _debug_state = DebugState() if _HAT_AVAILABLE else None
     _debug_view = [False]  # True = showing debug screen
+    _standby_active = [False]
+    _gate_ticks = [0]
+    _STANDBY_THRESHOLD = 20  # 20 ticks * 15s = 5 minutes
     _proactive_washer = [False]  # mutable container for closure
     _proactive_dryer = [False]
     _start_time = time.time()
@@ -297,6 +300,8 @@ def main() -> None:
         display.clear()
 
         def _on_washer_toggle():
+            _standby_active[0] = False
+            _gate_ticks[0] = 0
             _proactive_washer[0] = not _proactive_washer[0]
             _proactive_dryer_val = _proactive_dryer[0]
             if _proactive_washer[0] and _proactive_dryer_val:
@@ -316,6 +321,8 @@ def main() -> None:
                 display.show_image(frame)
 
         def _on_dryer_toggle():
+            _standby_active[0] = False
+            _gate_ticks[0] = 0
             _proactive_dryer[0] = not _proactive_dryer[0]
             _proactive_washer_val = _proactive_washer[0]
             if _proactive_washer_val and _proactive_dryer[0]:
@@ -341,6 +348,8 @@ def main() -> None:
             _feedback_clear_time[0] = time.time() + duration_s
 
         def _on_ok():
+            _standby_active[0] = False
+            _gate_ticks[0] = 0
             accepted = label_manager.confirm(ok=True)
             with _display_lock:
                 if accepted:
@@ -385,6 +394,8 @@ def main() -> None:
                     display.show_image(frame)
 
         def _on_ko():
+            _standby_active[0] = False
+            _gate_ticks[0] = 0
             now = time.time()
             # Clear stale clicks
             while _ko_click_times and now - _ko_click_times[0] > _MULTI_CLICK_WINDOW:
@@ -587,51 +598,77 @@ def main() -> None:
             # Auto-clear feedback message based on real time
             if _ui_state.feedback_msg and time.time() >= _feedback_clear_time[0]:
                 _ui_state.feedback_msg = ""
-            with _display_lock:
-                _ui_state.watts = watts
-                _ui_state.state = state
-                _ui_state.confidence = blended_conf if multi_window.is_ready() else 0.0
-                _ui_state.timestamp = datetime.now().strftime("%H:%M:%S")
-                _ui_state.has_error = has_error
-                _ui_state.cpu_percent = _read_cpu_percent()
-                _ui_state.temperature = _read_temperature()
-                _ui_state.ram_percent = _read_ram_free()
-                _ui_state.model_loaded = "PowerNet" if _TORCH_AVAILABLE else "Baseline"
-                if idle_gated:
-                    _ui_state.model_active = "Gate"
-                elif _using_cnn:
-                    _ui_state.model_active = "PowerNet"
-                else:
-                    _ui_state.model_active = "Baseline"
-                _ui_state.watt_history = list(watt_history)
-                # Reactive feedback state (single access to avoid TOCTOU race)
-                pending = label_manager.pending_event
-                if pending is not None:
-                    _ui_state.has_pending = True
-                    _ui_state.pending_state = pending.target_class
-                    _ui_state.pending_remaining_s = max(0, pending.expires_at - time.time())
-                else:
-                    _ui_state.has_pending = False
 
-                # Populate debug state
-                _debug_state.class_counts = replay_buffer.class_counts()
-                _debug_state.buffer_size = replay_buffer.size()
-                _debug_state.cold_start_ready = _cnn_ready(replay_buffer)
-                _debug_state.last_loss = training_loss
-                _debug_state.rolling_accuracy = confidence_tracker.get_rolling_accuracy()
-                _debug_state.evaluated_count = confidence_tracker.evaluated_count
-                _debug_state.drift_detected = drift_detected
-                _debug_state.model_loaded = _ui_state.model_loaded
-                _debug_state.model_active = _ui_state.model_active
-                _debug_state.timestamp = _ui_state.timestamp
-                _debug_state.uptime_s = time.time() - _start_time
+            # Track gate mode duration for standby
+            if idle_gated and not has_error:
+                _gate_ticks[0] += 1
+            else:
+                _gate_ticks[0] = 0
+                _standby_active[0] = False
 
-                # Render the active view
-                if _debug_view[0]:
-                    frame = render_debug_frame(_debug_state)
-                else:
-                    frame = render_frame(_ui_state)
-                display.show_image(frame)
+            # Check standby exit conditions
+            pending = label_manager.pending_event
+            if _standby_active[0]:
+                if not idle_gated or has_error or pending is not None:
+                    _standby_active[0] = False
+                    _gate_ticks[0] = 0
+
+            # Enter standby after 5 min of continuous gate
+            if not _standby_active[0] and _gate_ticks[0] >= _STANDBY_THRESHOLD:
+                _standby_active[0] = True
+                with _display_lock:
+                    frame = render_standby_frame()
+                    display.show_image(frame)
+                # Don't render anything else this tick
+            elif _standby_active[0]:
+                pass  # Display frozen, skip rendering entirely
+            else:
+                # Normal rendering
+                with _display_lock:
+                    _ui_state.watts = watts
+                    _ui_state.state = state
+                    _ui_state.confidence = blended_conf if multi_window.is_ready() else 0.0
+                    _ui_state.timestamp = datetime.now().strftime("%H:%M:%S")
+                    _ui_state.has_error = has_error
+                    _ui_state.cpu_percent = _read_cpu_percent()
+                    _ui_state.temperature = _read_temperature()
+                    _ui_state.ram_percent = _read_ram_free()
+                    _ui_state.model_loaded = "PowerNet" if _TORCH_AVAILABLE else "Baseline"
+                    if idle_gated:
+                        _ui_state.model_active = "Gate"
+                    elif _using_cnn:
+                        _ui_state.model_active = "PowerNet"
+                    else:
+                        _ui_state.model_active = "Baseline"
+                    _ui_state.watt_history = list(watt_history)
+                    # Reactive feedback state (single access to avoid TOCTOU race)
+                    pending_ev = label_manager.pending_event
+                    if pending_ev is not None:
+                        _ui_state.has_pending = True
+                        _ui_state.pending_state = pending_ev.target_class
+                        _ui_state.pending_remaining_s = max(0, pending_ev.expires_at - time.time())
+                    else:
+                        _ui_state.has_pending = False
+
+                    # Populate debug state
+                    _debug_state.class_counts = replay_buffer.class_counts()
+                    _debug_state.buffer_size = replay_buffer.size()
+                    _debug_state.cold_start_ready = _cnn_ready(replay_buffer)
+                    _debug_state.last_loss = training_loss
+                    _debug_state.rolling_accuracy = confidence_tracker.get_rolling_accuracy()
+                    _debug_state.evaluated_count = confidence_tracker.evaluated_count
+                    _debug_state.drift_detected = drift_detected
+                    _debug_state.model_loaded = _ui_state.model_loaded
+                    _debug_state.model_active = _ui_state.model_active
+                    _debug_state.timestamp = _ui_state.timestamp
+                    _debug_state.uptime_s = time.time() - _start_time
+
+                    # Render the active view
+                    if _debug_view[0]:
+                        frame = render_debug_frame(_debug_state)
+                    else:
+                        frame = render_frame(_ui_state)
+                    display.show_image(frame)
 
         # 9. Sleep
         time.sleep(TICK_INTERVAL)

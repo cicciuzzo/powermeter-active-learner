@@ -10,10 +10,10 @@ For dev-machine testing, mock hat.vendor.epd2in7_V2 before importing:
 """
 from hat.epd import EinkDisplay, WIDTH, HEIGHT, LANDSCAPE_W, LANDSCAPE_H
 from hat.buttons import ButtonHandler
-from hat.ui import UIState, DebugState, render_frame, render_debug_frame
+from hat.ui import UIState, DebugState, render_frame, render_debug_frame, render_standby_frame
 
 __all__ = [
     "EinkDisplay", "ButtonHandler",
-    "UIState", "DebugState", "render_frame", "render_debug_frame",
+    "UIState", "DebugState", "render_frame", "render_debug_frame", "render_standby_frame",
     "WIDTH", "HEIGHT", "LANDSCAPE_W", "LANDSCAPE_H",
 ]
