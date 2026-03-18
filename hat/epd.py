@@ -3,14 +3,15 @@
 hat/epd.py — EinkDisplay: thin wrapper around the Waveshare e-paper driver.
 
 EPD_VARIANT selects which driver to load:
-  "epd2in7"  — 2.7-inch black & white (176×264 portrait)  ← default
-  "epd2in7b" — 2.7-inch tri-color B/W/Red (176×264 portrait)
+  "epd2in7"    — 2.7-inch black & white (176×264 portrait)
+  "epd2in7_V2" — 2.7-inch black & white V2 hardware revision  ← default
+  "epd2in7b"   — 2.7-inch tri-color B/W/Red (176×264 portrait)
 """
 import importlib
 from PIL import Image
 
-# Change to "epd2in7b" if your HAT is the tri-color (B/W/Red) variant
-EPD_VARIANT = "epd2in7"
+# Change to "epd2in7" for V1 hardware, or "epd2in7b" for tri-color variant
+EPD_VARIANT = "epd2in7_V2"
 
 WIDTH = 176
 HEIGHT = 264
