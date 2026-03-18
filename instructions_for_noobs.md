@@ -103,6 +103,21 @@ Wait until the small green light on the board stops blinking, then you can safel
 
 ---
 
+## Stand-by mode
+
+When no appliance is running for more than 5 minutes, the screen goes into stand-by to protect it from burn-in. You'll see "Stand-by mode" with the current time.
+
+**The system keeps working in the background** — it's still reading power and listening for changes. The screen is just resting.
+
+The screen wakes up automatically when:
+- You press any button
+- An appliance turns on (power goes above 15W)
+- The system wants to ask you a question ("Is it right?")
+
+You don't need to do anything — it takes care of itself.
+
+---
+
 ## Debug screen (for advanced users)
 
 **Double-click the NO button** to see a technical debug screen with detailed system information. Double-click NO again to return to the normal screen.

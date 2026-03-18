@@ -267,6 +267,7 @@ Press **WASHER** when you start the washing machine, press again when it stops. 
 - **Anti-burn-in**: content shifted by random +/-2px on each refresh to prevent e-ink burn-in.
 - **MicroSD preservation**: SQLite WAL mode + reduced fsync. Logs print every ~2.5 min unless non-idle event. Watt history saved every ~60s.
 - **NTP sync**: checked at startup, logged if not synchronized.
+- **Stand-by mode**: after 5 minutes of continuous idle gate (<15W), the display stops refreshing and shows a static "Stand-by mode" screen at a random position. Wakes on button press, watts rising above 15W, or pending prediction.
 
 ## Repository Structure
 
