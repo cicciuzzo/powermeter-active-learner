@@ -1,5 +1,12 @@
 # powermeter-active-learner
 
+![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.5-EE4C2C?logo=pytorch&logoColor=white)
+![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-3-A22846?logo=raspberrypi&logoColor=white)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-REST%20API-41BDF5?logo=homeassistant&logoColor=white)
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+
 <p align="center">
   <img src="Example.jpg" alt="Waveshare e-Paper HAT showing live power monitoring — washing machine detected at 1898W with 79% confidence" width="600">
 </p>
@@ -307,4 +314,4 @@ powermeter-active-learner/
 
 ## License
 
-TBD
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
