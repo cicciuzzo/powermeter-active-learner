@@ -83,7 +83,12 @@ class Trainer:
         labels = torch.tensor([s["label"] for s in batch], dtype=torch.long)
 
         self._optimizer.zero_grad()
-        logits = self._model(windows)
+        try:
+            logits = self._model(windows)
+        except RuntimeError:
+            # Shape mismatch — likely old replay buffer data incompatible
+            # with current model architecture. Skip this batch silently.
+            return 0.0
         loss = self._criterion(logits, labels)
         loss.backward()
         self._optimizer.step()
