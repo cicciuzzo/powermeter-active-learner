@@ -1,5 +1,10 @@
 # powermeter-active-learner
 
+<p align="center">
+  <img src="Example.jpg" alt="Waveshare e-Paper HAT showing live power monitoring — washing machine detected at 1898W with 79% confidence" width="600">
+</p>
+<p align="center"><em>Live on Raspberry Pi 3: washing machine detected at 1898W, multi-scale CNN prediction with 79% confidence, 2-hour consumption chart, human-in-the-loop feedback via physical buttons.</em></p>
+
 ## Overview
 
 A domestic NILM (Non-Intrusive Load Monitoring) system with semi-supervised continuous learning, designed to run on a Raspberry Pi 3. The system disaggregates an aggregated power signal from a single smart plug to identify which appliances are active, using human-in-the-loop labeling to improve over time.
