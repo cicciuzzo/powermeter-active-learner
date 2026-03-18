@@ -10,7 +10,7 @@
 <p align="center">
   <img src="Example.jpg" alt="Waveshare e-Paper HAT showing live power monitoring — washing machine detected at 1898W with 79% confidence" width="600">
 </p>
-<p align="center"><em>Live on Raspberry Pi 3: washing machine detected at 1898W, multi-scale CNN prediction with 79% confidence, 2-hour consumption chart, human-in-the-loop feedback via physical buttons.</em></p>
+<p align="center"><em>Example screenshot shortly after boot — e-ink display on Raspberry Pi 3 showing real-time power reading, multi-scale CNN prediction, consumption chart, and human-in-the-loop feedback buttons.</em></p>
 
 ## Overview
 
