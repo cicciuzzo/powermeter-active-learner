@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+.claude/
+*.pt
+*.pth
+.env
+watt_history.json
+mockup ui.png
+
+# Project-internal docs (offline only)
+docs/superpowers/
+CLAUDE.md

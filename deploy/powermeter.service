@@ -1,0 +1,17 @@
+[Unit]
+Description=Powermeter Active Learner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=DEPLOY_USER
+WorkingDirectory=DEPLOY_HOME/powermeter-active-learner
+ExecStart=/usr/bin/python3 DEPLOY_HOME/powermeter-active-learner/main.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

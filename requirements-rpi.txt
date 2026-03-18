@@ -1,0 +1,9 @@
+# Dipendenze specifiche Raspberry Pi (Raspberry OS Lite, Python 3.11)
+# Nota: torch su ARM richiede URL speciale:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+numpy
+# Le seguenti sono già pre-installate su questo RPi ma documentate per fresh setup:
+spidev>=3.5
+Pillow>=10.0
+gpiozero>=2.0
+rpi-lgpio>=0.6
